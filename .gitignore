@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+build/
+
+# Test coverage
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+
+# npm
+*.tgz
+npm-debug.log*
+
+# TypeScript
+*.tsbuildinfo
+
+# Specs (local planning docs)
+.start/

@@ -1,0 +1,126 @@
+import OpenAI from "openai";
+import type {
+  MediaProvider,
+  ProviderCapabilities,
+  ImageParams,
+  VideoParams,
+  AudioParams,
+  GeneratedMedia,
+} from "./types.js";
+import { pollForCompletion } from "./polling.js";
+
+const ASPECT_RATIO_TO_SIZE: Record<string, string> = {
+  "1:1": "1024x1024",
+  "16:9": "1536x1024",
+  "9:16": "1024x1536",
+  "4:3": "1024x768",
+  "3:4": "768x1024",
+};
+
+export class OpenAIProvider implements MediaProvider {
+  readonly name = "openai";
+  readonly capabilities: ProviderCapabilities = {
+    supportsImageGeneration: true,
+    supportsVideoGeneration: true,
+    supportsAudioGeneration: true,
+    supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
+    supportedVideoAspectRatios: ["16:9", "9:16", "1:1"],
+    supportedVideoResolutions: ["480p", "720p", "1080p"],
+    supportedAudioFormats: ["mp3", "opus", "aac", "flac", "wav", "pcm"],
+    maxVideoDurationSeconds: 20,
+  };
+
+  private client: OpenAI;
+
+  constructor(apiKey: string) {
+    this.client = new OpenAI({ apiKey });
+  }
+
+  async generateImage(params: ImageParams): Promise<GeneratedMedia> {
+    const response = await this.client.images.generate({
+      model: "gpt-image-1",
+      prompt: params.prompt,
+      size: this.mapAspectRatioToSize(params.aspectRatio) as Parameters<
+        typeof this.client.images.generate
+      >[0]["size"],
+      quality: params.quality === "high" ? "hd" : "standard",
+      response_format: "b64_json",
+      ...params.providerOptions,
+    });
+
+    const base64Data = response.data![0].b64_json!;
+    return {
+      data: Buffer.from(base64Data, "base64"),
+      mimeType: "image/png",
+      metadata: { model: "gpt-image-1", provider: "openai" },
+    };
+  }
+
+  async generateVideo(params: VideoParams): Promise<GeneratedMedia> {
+    const videos = this.client.videos as unknown as {
+      create: (p: Record<string, unknown>) => Promise<Record<string, unknown>>;
+      retrieve: (id: string) => Promise<Record<string, unknown>>;
+    };
+
+    const job = await videos.create({
+      model: "sora-2",
+      prompt: params.prompt,
+      duration: params.duration,
+      ...params.providerOptions,
+    });
+
+    const result = await pollForCompletion(
+      () => videos.retrieve(job.id as string),
+      (status: Record<string, unknown>) => status.status === "completed",
+      { timeoutMs: 600_000, intervalMs: 5_000 },
+    );
+
+    const videoUrl = result.url as string;
+    const videoResponse = await fetch(videoUrl);
+    const data = Buffer.from(await videoResponse.arrayBuffer());
+
+    return {
+      data,
+      mimeType: "video/mp4",
+      metadata: { model: "sora-2", provider: "openai", jobId: job.id },
+    };
+  }
+
+  async generateAudio(params: AudioParams): Promise<GeneratedMedia> {
+    const format = params.format ?? "mp3";
+    const voice = params.voice ?? "alloy";
+
+    const response = await this.client.audio.speech.create({
+      model: "tts-1",
+      input: params.text,
+      voice: voice as "alloy",
+      response_format: format as "mp3",
+      speed: params.speed ?? 1.0,
+      ...params.providerOptions,
+    });
+
+    const data = Buffer.from(await response.arrayBuffer());
+
+    return {
+      data,
+      mimeType: this.audioFormatToMimeType(format),
+      metadata: { model: "tts-1", provider: "openai", voice, format },
+    };
+  }
+
+  private audioFormatToMimeType(format: string): string {
+    const mimeTypes: Record<string, string> = {
+      mp3: "audio/mpeg",
+      opus: "audio/opus",
+      aac: "audio/aac",
+      flac: "audio/flac",
+      wav: "audio/wav",
+      pcm: "audio/pcm",
+    };
+    return mimeTypes[format] ?? "audio/mpeg";
+  }
+
+  private mapAspectRatioToSize(aspectRatio: string): string {
+    return ASPECT_RATIO_TO_SIZE[aspectRatio] ?? "1024x1024";
+  }
+}

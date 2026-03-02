@@ -1,0 +1,89 @@
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { z } from "zod";
+import type { Config } from "./config.js";
+import { ProviderRegistry } from "./providers/registry.js";
+import { OpenAIProvider } from "./providers/openai.js";
+import { XAIProvider } from "./providers/xai.js";
+import { GoogleProvider } from "./providers/google.js";
+import { FileManager } from "./file-manager.js";
+import { buildGenerateImageHandler } from "./tools/generate-image.js";
+import { buildGenerateVideoHandler } from "./tools/generate-video.js";
+import { buildGenerateAudioHandler } from "./tools/generate-audio.js";
+import { buildListProvidersHandler } from "./tools/list-providers.js";
+
+export function createServer(config: Config) {
+  const registry = new ProviderRegistry();
+  const fileManager = new FileManager(config.outputDirectory);
+
+  if (config.openaiApiKey) {
+    registry.register(new OpenAIProvider(config.openaiApiKey));
+    console.error("[server] Registered OpenAI provider");
+  }
+  if (config.xaiApiKey) {
+    registry.register(new XAIProvider(config.xaiApiKey));
+    console.error("[server] Registered xAI provider");
+  }
+  if (config.googleApiKey) {
+    registry.register(new GoogleProvider(config.googleApiKey));
+    console.error("[server] Registered Google provider");
+  }
+
+  const generateImageHandler = buildGenerateImageHandler(registry, fileManager);
+  const generateVideoHandler = buildGenerateVideoHandler(registry, fileManager);
+  const generateAudioHandler = buildGenerateAudioHandler(registry, fileManager);
+  const listProvidersHandler = buildListProvidersHandler(registry);
+
+  const providerNames =
+    registry.listCapabilities().map((p) => p.name).join(", ") || "none configured";
+
+  const server = new McpServer({ name: "multimodal-mcp", version: "1.0.0" });
+
+  server.tool(
+    "generate_image",
+    `Generate an image from a text prompt using AI. Available providers: ${providerNames}`,
+    {
+      prompt: z.string().describe("Text description of the image to generate"),
+      provider: z.string().optional().describe("Provider to use: openai, xai, google. Auto-selects if omitted."),
+      aspectRatio: z.string().optional().describe("Aspect ratio: 1:1, 16:9, 9:16, 4:3, 3:4"),
+      quality: z.string().optional().describe("Quality level: low, standard, high"),
+      providerOptions: z.record(z.string(), z.unknown()).optional().describe("Provider-specific parameters passed through directly"),
+    },
+    async (params) => generateImageHandler(params),
+  );
+
+  server.tool(
+    "generate_video",
+    `Generate a video from a text prompt using AI. Available providers: ${providerNames}`,
+    {
+      prompt: z.string().describe("Text description of the video to generate"),
+      provider: z.string().optional().describe("Provider to use: openai, xai, google. Auto-selects if omitted."),
+      duration: z.number().optional().describe("Video duration in seconds (provider limits apply)"),
+      aspectRatio: z.string().optional().describe("Aspect ratio: 16:9, 9:16, 1:1"),
+      resolution: z.string().optional().describe("Resolution: 480p, 720p, 1080p"),
+      providerOptions: z.record(z.string(), z.unknown()).optional().describe("Provider-specific parameters passed through directly"),
+    },
+    async (params) => generateVideoHandler(params),
+  );
+
+  server.tool(
+    "generate_audio",
+    `Generate audio (text-to-speech) from text using AI. Available providers: ${providerNames}`,
+    {
+      text: z.string().describe("Text to convert to speech"),
+      provider: z.string().optional().describe("Provider to use: openai, google. Auto-selects if omitted."),
+      voice: z.string().optional().describe("Voice name (provider-specific). OpenAI: alloy, ash, coral, echo, fable, nova, onyx, sage, shimmer. Google: Kore, Charon, Fenrir, Aoede, Puck, etc."),
+      speed: z.number().optional().describe("Speech speed multiplier (OpenAI only): 0.25 to 4.0"),
+      format: z.string().optional().describe("Output format (OpenAI only): mp3, opus, aac, flac, wav, pcm"),
+      providerOptions: z.record(z.string(), z.unknown()).optional().describe("Provider-specific parameters passed through directly"),
+    },
+    async (params) => generateAudioHandler(params),
+  );
+
+  server.tool(
+    "list_providers",
+    "List all configured media generation providers and their capabilities",
+    async () => listProvidersHandler(),
+  );
+
+  return server;
+}
