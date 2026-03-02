@@ -3,6 +3,7 @@ import type {
   MediaProvider,
   ProviderCapabilities,
   ImageParams,
+  EditImageParams,
   VideoParams,
   AudioParams,
   GeneratedMedia,
@@ -27,6 +28,7 @@ export class XAIProvider implements MediaProvider {
 
   readonly capabilities: ProviderCapabilities = {
     supportsImageGeneration: true,
+    supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: false,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
@@ -62,6 +64,54 @@ export class XAIProvider implements MediaProvider {
       mimeType: "image/png",
       metadata: { model: IMAGE_MODEL, provider: "xai" },
     };
+  }
+
+  async editImage(params: EditImageParams): Promise<GeneratedMedia> {
+    const base64Data = params.imageData.toString("base64");
+    const dataUri = `data:${params.imageMimeType};base64,${base64Data}`;
+
+    const response = await fetch(`${XAI_BASE_URL}/images/edits`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${this.apiKey}`,
+      },
+      body: JSON.stringify({
+        model: IMAGE_MODEL,
+        prompt: params.prompt,
+        image: { url: dataUri, type: "image_url" },
+        ...params.providerOptions,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`xAI image editing failed: ${response.status}`);
+    }
+
+    const result = (await response.json()) as {
+      data: Array<{ b64_json?: string; url?: string }>;
+    };
+
+    const imageResult = result.data?.[0];
+    if (imageResult?.b64_json) {
+      return {
+        data: Buffer.from(imageResult.b64_json, "base64"),
+        mimeType: "image/png",
+        metadata: { model: IMAGE_MODEL, provider: "xai", operation: "edit" },
+      };
+    }
+
+    if (imageResult?.url) {
+      const imageResponse = await fetch(imageResult.url);
+      const data = Buffer.from(await imageResponse.arrayBuffer());
+      return {
+        data,
+        mimeType: "image/png",
+        metadata: { model: IMAGE_MODEL, provider: "xai", operation: "edit" },
+      };
+    }
+
+    throw new Error("xAI image editing returned no data");
   }
 
   async generateVideo(params: VideoParams): Promise<GeneratedMedia> {

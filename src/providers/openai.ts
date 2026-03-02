@@ -3,6 +3,7 @@ import type {
   MediaProvider,
   ProviderCapabilities,
   ImageParams,
+  EditImageParams,
   VideoParams,
   AudioParams,
   GeneratedMedia,
@@ -21,6 +22,7 @@ export class OpenAIProvider implements MediaProvider {
   readonly name = "openai";
   readonly capabilities: ProviderCapabilities = {
     supportsImageGeneration: true,
+    supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: true,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
@@ -56,18 +58,51 @@ export class OpenAIProvider implements MediaProvider {
     };
   }
 
+  async editImage(params: EditImageParams): Promise<GeneratedMedia> {
+    const imageFile = new File(
+      [new Uint8Array(params.imageData)],
+      "input.png",
+      { type: params.imageMimeType },
+    );
+
+    const response = await this.client.images.edit({
+      model: "gpt-image-1",
+      image: imageFile,
+      prompt: params.prompt,
+      ...params.providerOptions,
+    });
+
+    const base64Data = response.data![0].b64_json!;
+    return {
+      data: Buffer.from(base64Data, "base64"),
+      mimeType: "image/png",
+      metadata: { model: "gpt-image-1", provider: "openai", operation: "edit" },
+    };
+  }
+
   async generateVideo(params: VideoParams): Promise<GeneratedMedia> {
     const videos = this.client.videos as unknown as {
       create: (p: Record<string, unknown>) => Promise<Record<string, unknown>>;
       retrieve: (id: string) => Promise<Record<string, unknown>>;
     };
 
-    const job = await videos.create({
+    const createParams: Record<string, unknown> = {
       model: "sora-2",
       prompt: params.prompt,
       duration: params.duration,
       ...params.providerOptions,
-    });
+    };
+
+    if (params.imageData) {
+      const imageFile = new File(
+        [new Uint8Array(params.imageData)],
+        "first-frame.png",
+        { type: params.imageMimeType ?? "image/png" },
+      );
+      createParams.input_reference = imageFile;
+    }
+
+    const job = await videos.create(createParams);
 
     const result = await pollForCompletion(
       () => videos.retrieve(job.id as string),

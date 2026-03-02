@@ -2,6 +2,7 @@ import type {
   MediaProvider,
   ProviderCapabilities,
   ImageParams,
+  EditImageParams,
   VideoParams,
   AudioParams,
   GeneratedMedia,
@@ -37,6 +38,7 @@ export class GoogleProvider implements MediaProvider {
   readonly name = "google";
   readonly capabilities: ProviderCapabilities = {
     supportsImageGeneration: true,
+    supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: true,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
@@ -82,20 +84,82 @@ export class GoogleProvider implements MediaProvider {
     };
   }
 
+  async editImage(params: EditImageParams): Promise<GeneratedMedia> {
+    const base64Image = params.imageData.toString("base64");
+
+    const response = await fetch(
+      `${GEMINI_BASE_URL}/models/gemini-2.5-flash-preview-image:generateContent?key=${this.apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: params.prompt },
+              {
+                inline_data: {
+                  mime_type: params.imageMimeType,
+                  data: base64Image,
+                },
+              },
+            ],
+          }],
+          generationConfig: {
+            responseModalities: ["IMAGE"],
+            ...params.providerOptions,
+          },
+        }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(`Google image editing failed: ${response.status}`);
+    }
+
+    const result = (await response.json()) as GeminiTtsResponse;
+    const imagePart = result.candidates[0]?.content?.parts?.find(
+      (part) => part.inlineData !== undefined,
+    );
+
+    if (!imagePart?.inlineData) {
+      throw new Error("Google image editing returned no image data");
+    }
+
+    return {
+      data: Buffer.from(imagePart.inlineData.data, "base64"),
+      mimeType: imagePart.inlineData.mimeType || "image/png",
+      metadata: {
+        model: "gemini-2.5-flash-preview-image",
+        provider: "google",
+        operation: "edit",
+      },
+    };
+  }
+
   async generateVideo(params: VideoParams): Promise<GeneratedMedia> {
+    const requestBody: Record<string, unknown> = {
+      prompt: params.prompt,
+      config: {
+        aspectRatio: params.aspectRatio,
+        durationSeconds: params.duration,
+        ...params.providerOptions,
+      },
+    };
+
+    if (params.imageData) {
+      const base64Image = params.imageData.toString("base64");
+      (requestBody as Record<string, unknown>).image = {
+        bytesBase64Encoded: base64Image,
+        mimeType: params.imageMimeType ?? "image/png",
+      };
+    }
+
     const submitResponse = await fetch(
       `${GEMINI_BASE_URL}/models/veo-3.1:predictLongRunning?key=${this.apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: params.prompt,
-          config: {
-            aspectRatio: params.aspectRatio,
-            durationSeconds: params.duration,
-            ...params.providerOptions,
-          },
-        }),
+        body: JSON.stringify(requestBody),
       },
     );
 
