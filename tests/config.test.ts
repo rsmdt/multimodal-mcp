@@ -50,7 +50,7 @@ describe("loadConfig", () => {
     expect(config.outputDirectory).toBe("/custom/output");
   });
 
-  it("defaults outputDirectory to os.tmpdir() when not set", () => {
+  it("defaults outputDirectory to cwd when not set", () => {
     const config = loadConfig();
     expect(config.outputDirectory).toBeTruthy();
   });

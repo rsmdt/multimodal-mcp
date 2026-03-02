@@ -103,13 +103,14 @@ describe("createServer", () => {
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
-  it("registers all four tools", () => {
+  it("registers all five tools", () => {
     const config = { outputDirectory: "/tmp" };
     createServer(config);
-    expect(mockTool).toHaveBeenCalledTimes(4);
+    expect(mockTool).toHaveBeenCalledTimes(5);
 
     const toolNames = mockTool.mock.calls.map((call: unknown[]) => call[0]);
     expect(toolNames).toContain("generate_image");
+    expect(toolNames).toContain("edit_image");
     expect(toolNames).toContain("generate_video");
     expect(toolNames).toContain("generate_audio");
     expect(toolNames).toContain("list_providers");

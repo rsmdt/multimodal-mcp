@@ -117,6 +117,7 @@ describe("buildGenerateAudioHandler", () => {
     expect(mockSave).toHaveBeenCalledWith(
       expect.objectContaining({ mimeType: "audio/mpeg" }),
       "audio",
+      undefined,
     );
     expect(result.content[0].text).toContain("Audio saved to");
     expect(result.content[0].text).toContain("/tmp/audio-123-openai-abcd1234.mp3");
