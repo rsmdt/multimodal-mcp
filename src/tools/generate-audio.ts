@@ -22,7 +22,7 @@ export function buildGenerateAudioHandler(
       const available = registry.getAudioProviders().map((p) => p.name).join(", ") || "none";
       const text = params.provider
         ? `Provider "${params.provider}" is not configured or does not support audio. Available audio providers: ${available}`
-        : "No audio provider available. Configure one of: OPENAI_API_KEY, GOOGLE_API_KEY";
+        : "No audio provider available. Configure one of: OPENAI_API_KEY, GEMINI_API_KEY";
       return {
         isError: true as const,
         content: [{ type: "text" as const, text }],

@@ -19,7 +19,7 @@ export function buildGenerateVideoHandler(
       const available = registry.getVideoProviders().map((p) => p.name).join(", ") || "none";
       const text = params.provider
         ? `Provider "${params.provider}" is not configured. Available providers: ${available}`
-        : "No video provider available. Configure one of: OPENAI_API_KEY, XAI_API_KEY, GOOGLE_API_KEY";
+        : "No video provider available. Configure one of: OPENAI_API_KEY, XAI_API_KEY, GEMINI_API_KEY";
       return {
         isError: true as const,
         content: [{ type: "text" as const, text }],

@@ -25,23 +25,23 @@ describe("loadConfig", () => {
     expect(config.xaiApiKey).toBe("xai-test-456");
   });
 
-  it("handles GOOGLE_API_KEY", () => {
-    process.env.GOOGLE_API_KEY = "google-key-123";
+  it("handles GEMINI_API_KEY", () => {
+    process.env.GEMINI_API_KEY = "gemini-key-123";
     const config = loadConfig();
-    expect(config.googleApiKey).toBe("google-key-123");
+    expect(config.googleApiKey).toBe("gemini-key-123");
   });
 
-  it("handles GEMINI_API_KEY as alias for Google", () => {
-    process.env.GEMINI_API_KEY = "gemini-key-456";
+  it("handles GOOGLE_API_KEY as alias for Gemini", () => {
+    process.env.GOOGLE_API_KEY = "google-key-456";
     const config = loadConfig();
-    expect(config.googleApiKey).toBe("gemini-key-456");
+    expect(config.googleApiKey).toBe("google-key-456");
   });
 
-  it("prefers GOOGLE_API_KEY over GEMINI_API_KEY when both set", () => {
-    process.env.GOOGLE_API_KEY = "google-primary";
-    process.env.GEMINI_API_KEY = "gemini-fallback";
+  it("prefers GEMINI_API_KEY over GOOGLE_API_KEY when both set", () => {
+    process.env.GEMINI_API_KEY = "gemini-primary";
+    process.env.GOOGLE_API_KEY = "google-fallback";
     const config = loadConfig();
-    expect(config.googleApiKey).toBe("google-primary");
+    expect(config.googleApiKey).toBe("gemini-primary");
   });
 
   it("returns outputDirectory from MEDIA_OUTPUT_DIR", () => {

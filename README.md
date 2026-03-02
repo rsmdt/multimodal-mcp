@@ -1,56 +1,32 @@
 # multimodal-mcp
 
-Multi-provider media generation MCP server. Generate images, videos, and audio from text prompts using OpenAI, xAI, and Google through a single unified interface.
+Multi-provider media generation MCP server. Generate images, videos, and audio from text prompts using OpenAI, xAI, and Gemini through a single unified interface.
 
 ## Features
 
-- 🎨 **Image Generation** — Generate images via OpenAI (gpt-image-1), xAI (grok-imagine-image), or Google (imagen-4)
-- 🎬 **Video Generation** — Generate videos via OpenAI (sora-2), xAI (grok-imagine-video), or Google (veo-3.1)
-- 🔊 **Audio Generation** — Text-to-speech via OpenAI (tts-1) or Google (gemini-2.5-flash-preview-tts)
+- 🎨 **Image Generation** — Generate images via OpenAI (gpt-image-1), xAI (grok-imagine-image), or Gemini (imagen-4)
+- 🎬 **Video Generation** — Generate videos via OpenAI (sora-2), xAI (grok-imagine-video), or Gemini (veo-3.1)
+- 🔊 **Audio Generation** — Text-to-speech via OpenAI (tts-1) or Gemini (gemini-2.5-flash-preview-tts)
 - 🔄 **Auto-Discovery** — Automatically detects configured providers from environment variables
 - 🎯 **Provider Selection** — Auto-selects or explicitly choose a provider per request
 - 📁 **File Output** — Saves all generated media to disk with descriptive filenames
 
 ## Quick Start
 
-### Claude Desktop
+Set the API key for at least one provider. Most users only need one — add more to access additional providers.
 
-Add to your Claude Desktop config (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+```bash
+# Using OpenAI
+claude mcp add multimodal-mcp -e OPENAI_API_KEY=sk-... -- npx @r16t/multimodal-mcp
 
-```json
-{
-  "mcpServers": {
-    "multimodal-mcp": {
-      "command": "npx",
-      "args": ["multimodal-mcp"],
-      "env": {
-        "OPENAI_API_KEY": "sk-...",
-        "XAI_API_KEY": "xai-...",
-        "GOOGLE_API_KEY": "AIza...",
-        "MEDIA_OUTPUT_DIR": "/tmp/media"
-      }
-    }
-  }
-}
+# Or using xAI
+# claude mcp add multimodal-mcp -e XAI_API_KEY=xai-... -- npx @r16t/multimodal-mcp
+
+# Or using Gemini
+# claude mcp add multimodal-mcp -e GEMINI_API_KEY=AIza... -- npx @r16t/multimodal-mcp
 ```
 
-You only need to set keys for the providers you want to use. At least one is required.
-
-### Cursor / Other MCP Clients
-
-```json
-{
-  "mcpServers": {
-    "multimodal-mcp": {
-      "command": "npx",
-      "args": ["multimodal-mcp"],
-      "env": {
-        "OPENAI_API_KEY": "sk-..."
-      }
-    }
-  }
-}
-```
+Using a different editor? See [setup instructions](#editor-setup) for Claude Desktop, Cursor, VS Code, Windsurf, and Cline.
 
 ## Environment Variables
 
@@ -58,8 +34,8 @@ You only need to set keys for the providers you want to use. At least one is req
 |----------|----------|-------------|
 | `OPENAI_API_KEY` | At least one provider key | OpenAI API key — enables image, video, and audio generation via gpt-image-1, sora-2, and tts-1 |
 | `XAI_API_KEY` | At least one provider key | xAI API key — enables image and video generation via grok-imagine-image and grok-imagine-video |
-| `GOOGLE_API_KEY` | At least one provider key | Google API key — enables image, video, and audio generation via imagen-4, veo-3.1, and gemini-2.5-flash-preview-tts |
-| `GEMINI_API_KEY` | — | Alias for `GOOGLE_API_KEY`; either name is accepted |
+| `GEMINI_API_KEY` | At least one provider key | Gemini API key — enables image, video, and audio generation via imagen-4, veo-3.1, and gemini-2.5-flash-preview-tts |
+| `GOOGLE_API_KEY` | — | Alias for `GEMINI_API_KEY`; either name is accepted |
 | `MEDIA_OUTPUT_DIR` | No | Directory for saved media files. Defaults to the system temp directory |
 
 ## Available Tools
@@ -112,7 +88,7 @@ List all configured media generation providers and their capabilities. Takes no 
 |----------|:-----:|:-----:|:-----:|-------------|-------------|-------------|
 | OpenAI | ✅ | ✅ | ✅ | gpt-image-1 | sora-2 | tts-1 |
 | xAI | ✅ | ✅ | — | grok-imagine-image | grok-imagine-video | — |
-| Google | ✅ | ✅ | ✅ | imagen-4 | veo-3.1 | gemini-2.5-flash-preview-tts |
+| Gemini | ✅ | ✅ | ✅ | imagen-4 | veo-3.1 | gemini-2.5-flash-preview-tts |
 
 ### Image Aspect Ratios
 
@@ -120,7 +96,7 @@ List all configured media generation providers and their capabilities. Takes no 
 |----------|:---:|:----:|:----:|:---:|:---:|
 | OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ |
 | xAI | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Google | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Gemini | ✅ | ✅ | ✅ | ✅ | ✅ |
 
 ### Video Aspect Ratios & Resolutions
 
@@ -128,14 +104,14 @@ List all configured media generation providers and their capabilities. Takes no 
 |----------|:----:|:----:|:---:|:----:|:----:|:-----:|
 | OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | xAI | ✅ | ✅ | ✅ | — | ✅ | ✅ |
-| Google | ✅ | ✅ | — | — | ✅ | ✅ |
+| Gemini | ✅ | ✅ | — | — | ✅ | ✅ |
 
 ### Audio Formats
 
 | Provider | mp3 | opus | aac | flac | wav | pcm |
 |----------|:---:|:----:|:---:|:----:|:---:|:---:|
 | OpenAI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Google | — | — | — | — | ✅ | — |
+| Gemini | — | — | — | — | ✅ | — |
 
 ## Troubleshooting
 
@@ -145,11 +121,11 @@ List all configured media generation providers and their capabilities. Takes no 
 [config] No provider API keys detected
 ```
 
-Set at least one of `OPENAI_API_KEY`, `XAI_API_KEY`, or `GOOGLE_API_KEY` in the MCP server's `env` block.
+Set at least one of `OPENAI_API_KEY`, `XAI_API_KEY`, or `GEMINI_API_KEY` in the MCP server's `env` block.
 
 ### Provider not available for requested media type
 
-All three providers support image and video generation. Audio generation (text-to-speech) is supported by OpenAI and Google. xAI does not currently offer a standalone TTS API. If you specify a `provider` that isn't configured (no API key) or doesn't support the requested media type, you'll receive an error. Omit the `provider` parameter to auto-select from configured providers.
+All three providers support image and video generation. Audio generation (text-to-speech) is supported by OpenAI and Gemini. xAI does not currently offer a standalone TTS API. If you specify a `provider` that isn't configured (no API key) or doesn't support the requested media type, you'll receive an error. Omit the `provider` parameter to auto-select from configured providers.
 
 ### Video generation timeout
 
@@ -159,9 +135,9 @@ Video generation polls for up to 10 minutes. If your video hasn't completed in t
 
 This indicates the xAI API returned an empty response. Check that your `XAI_API_KEY` is valid and that your prompt does not violate xAI content policies.
 
-### Google image/video generation failed: 403
+### Gemini image/video generation failed: 403
 
-Verify your `GOOGLE_API_KEY` has the Generative Language API enabled in Google Cloud Console.
+Verify your `GEMINI_API_KEY` has the Generative Language API enabled in Google Cloud Console.
 
 ## Development
 
@@ -171,6 +147,100 @@ npm test           # Run tests with Vitest
 npm run lint       # Lint and auto-fix with ESLint
 npm run typecheck  # Type-check without emitting
 npm run dev        # Watch mode for TypeScript compilation
+```
+
+## Editor Setup
+
+Replace `OPENAI_API_KEY` with your provider of choice (`XAI_API_KEY`, `GEMINI_API_KEY`). You can set multiple keys to enable multiple providers.
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "multimodal-mcp": {
+      "command": "npx",
+      "args": ["@r16t/multimodal-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your project root (or `~/.cursor/mcp.json` globally):
+
+```json
+{
+  "mcpServers": {
+    "multimodal-mcp": {
+      "command": "npx",
+      "args": ["@r16t/multimodal-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+### VS Code (GitHub Copilot)
+
+Add to `.vscode/mcp.json` in your project root:
+
+```json
+{
+  "servers": {
+    "multimodal-mcp": {
+      "command": "npx",
+      "args": ["@r16t/multimodal-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+### Windsurf
+
+Add to `~/.codeium/windsurf/mcp_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "multimodal-mcp": {
+      "command": "npx",
+      "args": ["@r16t/multimodal-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
+```
+
+### Cline
+
+Add to `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "multimodal-mcp": {
+      "command": "npx",
+      "args": ["@r16t/multimodal-mcp"],
+      "env": {
+        "OPENAI_API_KEY": "sk-..."
+      }
+    }
+  }
+}
 ```
 
 ## License

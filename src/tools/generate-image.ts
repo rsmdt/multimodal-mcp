@@ -19,7 +19,7 @@ export function buildGenerateImageHandler(
       const availableNames = registry.getImageProviders().map((p) => p.name).join(", ");
       const text = params.provider
         ? `Provider "${params.provider}" is not configured. Available providers: ${availableNames || "none"}`
-        : "No image provider available. Configure one of: OPENAI_API_KEY, XAI_API_KEY, GOOGLE_API_KEY";
+        : "No image provider available. Configure one of: OPENAI_API_KEY, XAI_API_KEY, GEMINI_API_KEY";
 
       return {
         isError: true as const,

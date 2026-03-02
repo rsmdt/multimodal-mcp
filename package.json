@@ -1,11 +1,12 @@
 {
-  "name": "multimodal-mcp",
+  "name": "@r16t/multimodal-mcp",
   "version": "1.0.0",
   "description": "Multi-provider media generation MCP server",
   "type": "module",
   "main": "build/index.js",
   "bin": {
-    "multimodal-mcp": "build/index.js"
+    "multimodal-mcp": "build/index.js",
+    "@r16t/multimodal-mcp": "build/index.js"
   },
   "files": [
     "build/"

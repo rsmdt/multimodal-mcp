@@ -8,7 +8,7 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
       return {
         content: [{
           type: "text" as const,
-          text: "No providers configured. Set one or more API keys: OPENAI_API_KEY, XAI_API_KEY, GOOGLE_API_KEY",
+          text: "No providers configured. Set one or more API keys: OPENAI_API_KEY, XAI_API_KEY, GEMINI_API_KEY",
         }],
       };
     }
@@ -17,6 +17,7 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
       const caps: string[] = [];
       if (p.capabilities.supportsImageGeneration) caps.push("image");
       if (p.capabilities.supportsVideoGeneration) caps.push("video");
+      if (p.capabilities.supportsAudioGeneration) caps.push("audio");
       return `- ${p.name}: ${caps.join(", ")}`;
     });
 
