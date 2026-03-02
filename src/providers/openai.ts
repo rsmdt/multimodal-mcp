@@ -43,8 +43,8 @@ export class OpenAIProvider implements MediaProvider {
       size: this.mapAspectRatioToSize(params.aspectRatio) as Parameters<
         typeof this.client.images.generate
       >[0]["size"],
-      quality: params.quality === "high" ? "hd" : "standard",
-      response_format: "b64_json",
+      quality: params.quality === "high" ? "high" : params.quality === "low" ? "low" : "medium",
+      output_format: "png",
       ...params.providerOptions,
     });
 

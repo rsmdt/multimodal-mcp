@@ -83,11 +83,35 @@ describe("OpenAIProvider", () => {
       );
     });
 
-    it("calls client.images.generate with response_format 'b64_json'", async () => {
+    it("calls client.images.generate with output_format 'png'", async () => {
       await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "standard" });
 
       expect(mockImagesGenerate).toHaveBeenCalledWith(
-        expect.objectContaining({ response_format: "b64_json" }),
+        expect.objectContaining({ output_format: "png" }),
+      );
+    });
+
+    it("maps quality 'high' to 'high' for gpt-image-1", async () => {
+      await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "high" });
+
+      expect(mockImagesGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ quality: "high" }),
+      );
+    });
+
+    it("maps quality 'standard' to 'medium' for gpt-image-1", async () => {
+      await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "standard" });
+
+      expect(mockImagesGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ quality: "medium" }),
+      );
+    });
+
+    it("maps quality 'low' to 'low' for gpt-image-1", async () => {
+      await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "low" });
+
+      expect(mockImagesGenerate).toHaveBeenCalledWith(
+        expect.objectContaining({ quality: "low" }),
       );
     });
 
