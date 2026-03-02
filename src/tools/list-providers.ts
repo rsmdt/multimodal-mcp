@@ -16,6 +16,7 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
     const lines = providers.map((p) => {
       const caps: string[] = [];
       if (p.capabilities.supportsImageGeneration) caps.push("image");
+      if (p.capabilities.supportsImageEditing) caps.push("image editing");
       if (p.capabilities.supportsVideoGeneration) caps.push("video");
       if (p.capabilities.supportsAudioGeneration) caps.push("audio");
       return `- ${p.name}: ${caps.join(", ")}`;

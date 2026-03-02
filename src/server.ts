@@ -7,6 +7,7 @@ import { XAIProvider } from "./providers/xai.js";
 import { GoogleProvider } from "./providers/google.js";
 import { FileManager } from "./file-manager.js";
 import { buildGenerateImageHandler } from "./tools/generate-image.js";
+import { buildEditImageHandler } from "./tools/edit-image.js";
 import { buildGenerateVideoHandler } from "./tools/generate-video.js";
 import { buildGenerateAudioHandler } from "./tools/generate-audio.js";
 import { buildListProvidersHandler } from "./tools/list-providers.js";
@@ -29,6 +30,7 @@ export function createServer(config: Config) {
   }
 
   const generateImageHandler = buildGenerateImageHandler(registry, fileManager);
+  const editImageHandler = buildEditImageHandler(registry, fileManager);
   const generateVideoHandler = buildGenerateVideoHandler(registry, fileManager);
   const generateAudioHandler = buildGenerateAudioHandler(registry, fileManager);
   const listProvidersHandler = buildListProvidersHandler(registry);
@@ -53,14 +55,28 @@ export function createServer(config: Config) {
   );
 
   server.tool(
+    "edit_image",
+    `Edit an existing image using AI. Provide the path to an image and a text prompt describing the desired edits. Available providers: ${providerNames}`,
+    {
+      imagePath: z.string().describe("Absolute path to the source image file to edit"),
+      prompt: z.string().describe("Text description of the edits to apply to the image"),
+      provider: z.string().optional().describe("Provider to use: openai, xai, google. Auto-selects if omitted."),
+      outputDirectory: z.string().optional().describe("Directory to save the edited file. Supports absolute or relative paths (resolved from cwd). Defaults to MEDIA_OUTPUT_DIR env var or cwd."),
+      providerOptions: z.record(z.string(), z.unknown()).optional().describe("Provider-specific parameters passed through directly"),
+    },
+    async (params) => editImageHandler(params),
+  );
+
+  server.tool(
     "generate_video",
-    `Generate a video from a text prompt using AI. Available providers: ${providerNames}`,
+    `Generate a video from a text prompt using AI. Optionally provide an image as the first frame. Available providers: ${providerNames}`,
     {
       prompt: z.string().describe("Text description of the video to generate"),
       provider: z.string().optional().describe("Provider to use: openai, xai, google. Auto-selects if omitted."),
       duration: z.number().optional().describe("Video duration in seconds (provider limits apply)"),
       aspectRatio: z.string().optional().describe("Aspect ratio: 16:9, 9:16, 1:1"),
       resolution: z.string().optional().describe("Resolution: 480p, 720p, 1080p"),
+      imagePath: z.string().optional().describe("Path to an image to use as the first frame of the video (OpenAI and Google only)"),
       outputDirectory: z.string().optional().describe("Directory to save the generated file. Supports absolute or relative paths (resolved from cwd). Defaults to MEDIA_OUTPUT_DIR env var or cwd."),
       providerOptions: z.record(z.string(), z.unknown()).optional().describe("Provider-specific parameters passed through directly"),
     },

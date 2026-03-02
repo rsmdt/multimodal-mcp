@@ -1,5 +1,6 @@
 import type { ProviderRegistry } from "../providers/registry.js";
 import type { FileManager } from "../file-manager.js";
+import { readMediaFile } from "../read-media-file.js";
 import { sanitizeError } from "../errors.js";
 
 export function buildGenerateVideoHandler(
@@ -12,6 +13,7 @@ export function buildGenerateVideoHandler(
     duration?: number;
     aspectRatio?: string;
     resolution?: string;
+    imagePath?: string;
     outputDirectory?: string;
     providerOptions?: Record<string, unknown>;
   }) => {
@@ -28,11 +30,22 @@ export function buildGenerateVideoHandler(
     }
 
     try {
+      let imageData: Buffer | undefined;
+      let imageMimeType: string | undefined;
+
+      if (params.imagePath) {
+        const file = await readMediaFile(params.imagePath);
+        imageData = file.data;
+        imageMimeType = file.mimeType;
+      }
+
       const media = await provider.generateVideo({
         prompt: params.prompt,
         duration: params.duration ?? 5,
         aspectRatio: params.aspectRatio ?? "16:9",
         resolution: params.resolution ?? "720p",
+        imageData,
+        imageMimeType,
         providerOptions: params.providerOptions,
       });
 
