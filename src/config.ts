@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { tmpdir } from "node:os";
 
 const configSchema = z.object({
   openaiApiKey: z.string().optional(),
@@ -19,7 +18,7 @@ export function loadConfig(): Config {
     openaiApiKey: process.env.OPENAI_API_KEY || undefined,
     xaiApiKey: process.env.XAI_API_KEY || undefined,
     googleApiKey: resolveGeminiKey(),
-    outputDirectory: process.env.MEDIA_OUTPUT_DIR || tmpdir(),
+    outputDirectory: process.env.MEDIA_OUTPUT_DIR || process.cwd(),
   });
 
   const detected: string[] = [];

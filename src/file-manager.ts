@@ -10,15 +10,23 @@ export class FileManager {
     this.outputDirectory = resolve(outputDirectory);
   }
 
-  async save(media: GeneratedMedia, type: "image" | "video" | "audio"): Promise<string> {
-    await mkdir(this.outputDirectory, { recursive: true });
+  async save(
+    media: GeneratedMedia,
+    type: "image" | "video" | "audio",
+    outputDirectory?: string,
+  ): Promise<string> {
+    const targetDirectory = outputDirectory
+      ? resolve(outputDirectory)
+      : this.outputDirectory;
+
+    await mkdir(targetDirectory, { recursive: true });
 
     const extension = this.getExtension(type, media.mimeType);
     const provider = (media.metadata.provider as string) || "unknown";
     const timestamp = Date.now();
     const random = randomBytes(4).toString("hex");
     const filename = `${type}-${timestamp}-${provider}-${random}.${extension}`;
-    const filePath = join(this.outputDirectory, filename);
+    const filePath = join(targetDirectory, filename);
 
     await writeFile(filePath, media.data);
     return filePath;

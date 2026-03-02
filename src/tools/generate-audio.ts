@@ -12,6 +12,7 @@ export function buildGenerateAudioHandler(
     voice?: string;
     speed?: number;
     format?: string;
+    outputDirectory?: string;
     providerOptions?: Record<string, unknown>;
   }) => {
     const provider = params.provider
@@ -49,7 +50,7 @@ export function buildGenerateAudioHandler(
         providerOptions: params.providerOptions,
       });
 
-      const filePath = await fileManager.save(media, "audio");
+      const filePath = await fileManager.save(media, "audio", params.outputDirectory);
       return {
         content: [{ type: "text" as const, text: `Audio saved to ${filePath}` }],
       };

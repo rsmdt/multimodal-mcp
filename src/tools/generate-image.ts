@@ -11,6 +11,7 @@ export function buildGenerateImageHandler(
     provider?: string;
     aspectRatio?: string;
     quality?: string;
+    outputDirectory?: string;
     providerOptions?: Record<string, unknown>;
   }) => {
     const provider = registry.getProvider(params.provider);
@@ -35,7 +36,7 @@ export function buildGenerateImageHandler(
         providerOptions: params.providerOptions,
       });
 
-      const filePath = await fileManager.save(media, "image");
+      const filePath = await fileManager.save(media, "image", params.outputDirectory);
 
       return {
         content: [{ type: "text" as const, text: `Image saved to ${filePath}` }],

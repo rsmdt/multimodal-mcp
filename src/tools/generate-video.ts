@@ -12,6 +12,7 @@ export function buildGenerateVideoHandler(
     duration?: number;
     aspectRatio?: string;
     resolution?: string;
+    outputDirectory?: string;
     providerOptions?: Record<string, unknown>;
   }) => {
     const provider = registry.getProvider(params.provider);
@@ -35,7 +36,7 @@ export function buildGenerateVideoHandler(
         providerOptions: params.providerOptions,
       });
 
-      const filePath = await fileManager.save(media, "video");
+      const filePath = await fileManager.save(media, "video", params.outputDirectory);
       return {
         content: [{ type: "text" as const, text: `Video saved to ${filePath}` }],
       };
