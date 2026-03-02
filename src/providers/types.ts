@@ -2,12 +2,14 @@ export interface MediaProvider {
   readonly name: string;
   readonly capabilities: ProviderCapabilities;
   generateImage(params: ImageParams): Promise<GeneratedMedia>;
+  editImage(params: EditImageParams): Promise<GeneratedMedia>;
   generateVideo(params: VideoParams): Promise<GeneratedMedia>;
   generateAudio(params: AudioParams): Promise<GeneratedMedia>;
 }
 
 export interface ProviderCapabilities {
   supportsImageGeneration: boolean;
+  supportsImageEditing: boolean;
   supportsVideoGeneration: boolean;
   supportsAudioGeneration: boolean;
   supportedImageAspectRatios: string[];
@@ -24,11 +26,20 @@ export interface ImageParams {
   providerOptions?: Record<string, unknown>;
 }
 
+export interface EditImageParams {
+  imageData: Buffer;
+  imageMimeType: string;
+  prompt: string;
+  providerOptions?: Record<string, unknown>;
+}
+
 export interface VideoParams {
   prompt: string;
   duration: number;
   aspectRatio: string;
   resolution: string;
+  imageData?: Buffer;
+  imageMimeType?: string;
   providerOptions?: Record<string, unknown>;
 }
 

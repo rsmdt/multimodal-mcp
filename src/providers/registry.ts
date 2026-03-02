@@ -21,6 +21,12 @@ export class ProviderRegistry {
     );
   }
 
+  getImageEditProviders(): MediaProvider[] {
+    return [...this.providers.values()].filter(
+      (p) => p.capabilities.supportsImageEditing,
+    );
+  }
+
   getVideoProviders(): MediaProvider[] {
     return [...this.providers.values()].filter(
       (p) => p.capabilities.supportsVideoGeneration,
