@@ -17,13 +17,13 @@ Set the API key for at least one provider. Most users only need one — add more
 
 ```bash
 # Using OpenAI
-claude mcp add multimodal-mcp -e OPENAI_API_KEY=sk-... -- npx @r16t/multimodal-mcp
+claude mcp add multimodal-mcp -e OPENAI_API_KEY=sk-... -- npx @r16t/multimodal-mcp@latest
 
 # Or using xAI
-# claude mcp add multimodal-mcp -e XAI_API_KEY=xai-... -- npx @r16t/multimodal-mcp
+# claude mcp add multimodal-mcp -e XAI_API_KEY=xai-... -- npx @r16t/multimodal-mcp@latest
 
 # Or using Gemini
-# claude mcp add multimodal-mcp -e GEMINI_API_KEY=AIza... -- npx @r16t/multimodal-mcp
+# claude mcp add multimodal-mcp -e GEMINI_API_KEY=AIza... -- npx @r16t/multimodal-mcp@latest
 ```
 
 Using a different editor? See [setup instructions](#editor-setup) for Claude Desktop, Cursor, VS Code, Windsurf, and Cline.
@@ -36,7 +36,7 @@ Using a different editor? See [setup instructions](#editor-setup) for Claude Des
 | `XAI_API_KEY` | At least one provider key | xAI API key — enables image and video generation via grok-imagine-image and grok-imagine-video |
 | `GEMINI_API_KEY` | At least one provider key | Gemini API key — enables image, video, and audio generation via imagen-4, veo-3.1, and gemini-2.5-flash-preview-tts |
 | `GOOGLE_API_KEY` | — | Alias for `GEMINI_API_KEY`; either name is accepted |
-| `MEDIA_OUTPUT_DIR` | No | Directory for saved media files. Defaults to the system temp directory |
+| `MEDIA_OUTPUT_DIR` | No | Directory for saved media files. Defaults to the current working directory |
 
 ## Available Tools
 
@@ -50,6 +50,7 @@ Generate an image from a text prompt.
 | `provider` | string | No | Provider to use: `openai`, `xai`, `google`. Auto-selects if omitted |
 | `aspectRatio` | string | No | Aspect ratio: `1:1`, `16:9`, `9:16`, `4:3`, `3:4` |
 | `quality` | string | No | Quality level: `low`, `standard`, `high` |
+| `outputDirectory` | string | No | Directory to save the generated file. Absolute or relative path. Defaults to `MEDIA_OUTPUT_DIR` or cwd |
 | `providerOptions` | object | No | Provider-specific parameters passed through directly |
 
 ### `generate_video`
@@ -63,6 +64,7 @@ Generate a video from a text prompt. Video generation is asynchronous and may ta
 | `duration` | number | No | Video duration in seconds (provider limits apply) |
 | `aspectRatio` | string | No | Aspect ratio: `16:9`, `9:16`, `1:1` |
 | `resolution` | string | No | Resolution: `480p`, `720p`, `1080p` |
+| `outputDirectory` | string | No | Directory to save the generated file. Absolute or relative path. Defaults to `MEDIA_OUTPUT_DIR` or cwd |
 | `providerOptions` | object | No | Provider-specific parameters passed through directly |
 
 ### `generate_audio`
@@ -76,6 +78,7 @@ Generate audio (text-to-speech) from text. Audio generation is synchronous.
 | `voice` | string | No | Voice name (provider-specific). OpenAI: `alloy`, `ash`, `coral`, `echo`, `fable`, `nova`, `onyx`, `sage`, `shimmer`. Google: `Kore`, `Charon`, `Fenrir`, `Aoede`, `Puck`, etc. |
 | `speed` | number | No | Speech speed multiplier (OpenAI only): `0.25` to `4.0` |
 | `format` | string | No | Output format (OpenAI only): `mp3`, `opus`, `aac`, `flac`, `wav`, `pcm` |
+| `outputDirectory` | string | No | Directory to save the generated file. Absolute or relative path. Defaults to `MEDIA_OUTPUT_DIR` or cwd |
 | `providerOptions` | object | No | Provider-specific parameters passed through directly |
 
 ### `list_providers`
@@ -162,7 +165,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
   "mcpServers": {
     "multimodal-mcp": {
       "command": "npx",
-      "args": ["@r16t/multimodal-mcp"],
+      "args": ["@r16t/multimodal-mcp@latest"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
@@ -180,7 +183,7 @@ Add to `.cursor/mcp.json` in your project root (or `~/.cursor/mcp.json` globally
   "mcpServers": {
     "multimodal-mcp": {
       "command": "npx",
-      "args": ["@r16t/multimodal-mcp"],
+      "args": ["@r16t/multimodal-mcp@latest"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
@@ -198,7 +201,7 @@ Add to `.vscode/mcp.json` in your project root:
   "servers": {
     "multimodal-mcp": {
       "command": "npx",
-      "args": ["@r16t/multimodal-mcp"],
+      "args": ["@r16t/multimodal-mcp@latest"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
@@ -216,7 +219,7 @@ Add to `~/.codeium/windsurf/mcp_config.json`:
   "mcpServers": {
     "multimodal-mcp": {
       "command": "npx",
-      "args": ["@r16t/multimodal-mcp"],
+      "args": ["@r16t/multimodal-mcp@latest"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
@@ -234,7 +237,7 @@ Add to `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude
   "mcpServers": {
     "multimodal-mcp": {
       "command": "npx",
-      "args": ["@r16t/multimodal-mcp"],
+      "args": ["@r16t/multimodal-mcp@latest"],
       "env": {
         "OPENAI_API_KEY": "sk-..."
       }
