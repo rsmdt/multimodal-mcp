@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.rsmdt/multimodal",
-  "description": "Multi-provider media generation MCP server. Generate images, videos, audio, and transcriptions using OpenAI, xAI, Gemini, ElevenLabs, and BFL through a unified interface.",
+  "description": "Multi-provider media generation — images, video, audio, and transcription via a unified interface",
   "repository": {
     "url": "https://github.com/rsmdt/multimodal-mcp",
     "source": "github"
