@@ -19,8 +19,10 @@ vi.mock("../src/providers/registry.js", () => ({
       register: mockRegister,
       getProvider: vi.fn(),
       getImageProviders: vi.fn().mockReturnValue([]),
+      getImageEditProviders: vi.fn().mockReturnValue([]),
       getVideoProviders: vi.fn().mockReturnValue([]),
       getAudioProviders: vi.fn().mockReturnValue([]),
+      getTranscriptionProviders: vi.fn().mockReturnValue([]),
       listCapabilities: mockListCapabilities,
     };
   }),
@@ -44,6 +46,18 @@ vi.mock("../src/providers/google.js", () => ({
   }),
 }));
 
+vi.mock("../src/providers/elevenlabs.js", () => ({
+  ElevenLabsProvider: vi.fn(function (_apiKey: string) {
+    return { name: "elevenlabs", capabilities: {} };
+  }),
+}));
+
+vi.mock("../src/providers/bfl.js", () => ({
+  BFLProvider: vi.fn(function (_apiKey: string) {
+    return { name: "bfl", capabilities: {} };
+  }),
+}));
+
 vi.mock("../src/file-manager.js", () => ({
   FileManager: vi.fn(function (_dir: string) {
     return { save: vi.fn() };
@@ -54,12 +68,20 @@ vi.mock("../src/tools/generate-image.js", () => ({
   buildGenerateImageHandler: vi.fn(() => vi.fn()),
 }));
 
+vi.mock("../src/tools/edit-image.js", () => ({
+  buildEditImageHandler: vi.fn(() => vi.fn()),
+}));
+
 vi.mock("../src/tools/generate-video.js", () => ({
   buildGenerateVideoHandler: vi.fn(() => vi.fn()),
 }));
 
 vi.mock("../src/tools/generate-audio.js", () => ({
   buildGenerateAudioHandler: vi.fn(() => vi.fn()),
+}));
+
+vi.mock("../src/tools/transcribe-audio.js", () => ({
+  buildTranscribeAudioHandler: vi.fn(() => vi.fn()),
 }));
 
 vi.mock("../src/tools/list-providers.js", () => ({
@@ -86,15 +108,17 @@ describe("createServer", () => {
     expect(mockRegister).toHaveBeenCalledTimes(1);
   });
 
-  it("registers all three providers when all API keys are configured", () => {
+  it("registers all five providers when all API keys are configured", () => {
     const config = {
       openaiApiKey: "sk-test",
       xaiApiKey: "xai-test",
       googleApiKey: "google-test",
+      elevenlabsApiKey: "xi-test",
+      bflApiKey: "bfl-test",
       outputDirectory: "/tmp",
     };
     createServer(config);
-    expect(mockRegister).toHaveBeenCalledTimes(3);
+    expect(mockRegister).toHaveBeenCalledTimes(5);
   });
 
   it("registers no providers when no API keys are configured", () => {
@@ -103,16 +127,17 @@ describe("createServer", () => {
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
-  it("registers all five tools", () => {
+  it("registers all six tools", () => {
     const config = { outputDirectory: "/tmp" };
     createServer(config);
-    expect(mockTool).toHaveBeenCalledTimes(5);
+    expect(mockTool).toHaveBeenCalledTimes(6);
 
     const toolNames = mockTool.mock.calls.map((call: unknown[]) => call[0]);
     expect(toolNames).toContain("generate_image");
     expect(toolNames).toContain("edit_image");
     expect(toolNames).toContain("generate_video");
     expect(toolNames).toContain("generate_audio");
+    expect(toolNames).toContain("transcribe_audio");
     expect(toolNames).toContain("list_providers");
   });
 

@@ -31,6 +31,7 @@ export class XAIProvider implements MediaProvider {
     supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: false,
+    supportsTranscription: false,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
     supportedVideoAspectRatios: ["16:9", "9:16", "1:1"],
     supportedVideoResolutions: ["720p", "1080p"],

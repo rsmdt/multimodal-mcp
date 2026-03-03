@@ -8,7 +8,7 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
       return {
         content: [{
           type: "text" as const,
-          text: "No providers configured. Set one or more API keys: OPENAI_API_KEY, XAI_API_KEY, GEMINI_API_KEY",
+          text: "No providers configured. Set one or more API keys: OPENAI_API_KEY, XAI_API_KEY, GEMINI_API_KEY, ELEVENLABS_API_KEY, BFL_API_KEY",
         }],
       };
     }
@@ -19,6 +19,7 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
       if (p.capabilities.supportsImageEditing) caps.push("image editing");
       if (p.capabilities.supportsVideoGeneration) caps.push("video");
       if (p.capabilities.supportsAudioGeneration) caps.push("audio");
+      if (p.capabilities.supportsTranscription) caps.push("transcription");
       return `- ${p.name}: ${caps.join(", ")}`;
     });
 

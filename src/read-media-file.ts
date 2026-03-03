@@ -8,6 +8,14 @@ const EXTENSION_TO_MIME: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".mp4": "video/mp4",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
+  ".flac": "audio/flac",
+  ".ogg": "audio/ogg",
+  ".m4a": "audio/mp4",
+  ".aac": "audio/aac",
+  ".opus": "audio/opus",
+  ".webm": "audio/webm",
 };
 
 export async function readMediaFile(

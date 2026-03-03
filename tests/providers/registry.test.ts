@@ -13,12 +13,14 @@ const makeProvider = (
   supportsImage: boolean,
   supportsVideo: boolean,
   supportsAudio = false,
+  supportsTranscription = false,
 ): MediaProvider => ({
   name,
   capabilities: {
     supportsImageGeneration: supportsImage,
     supportsVideoGeneration: supportsVideo,
     supportsAudioGeneration: supportsAudio,
+    supportsTranscription,
     supportedImageAspectRatios: supportsImage ? ["1:1", "16:9"] : [],
     supportedVideoAspectRatios: supportsVideo ? ["16:9"] : [],
     supportedVideoResolutions: supportsVideo ? ["1080p"] : [],
@@ -144,6 +146,25 @@ describe("ProviderRegistry", () => {
     it("returns empty array when no audio providers registered", () => {
       registry.register(makeProvider("image-only", true, false, false));
       expect(registry.getAudioProviders()).toEqual([]);
+    });
+  });
+
+  describe("getTranscriptionProviders()", () => {
+    it("returns only providers with supportsTranscription: true", () => {
+      const withTranscription = makeProvider("with-transcription", false, false, false, true);
+      const withoutTranscription = makeProvider("without-transcription", true, true, false, false);
+      registry.register(withTranscription);
+      registry.register(withoutTranscription);
+
+      const result = registry.getTranscriptionProviders();
+      expect(result).toHaveLength(1);
+      expect(result).toContain(withTranscription);
+      expect(result).not.toContain(withoutTranscription);
+    });
+
+    it("returns empty array when no transcription providers registered", () => {
+      registry.register(makeProvider("image-only", true, false, false, false));
+      expect(registry.getTranscriptionProviders()).toEqual([]);
     });
   });
 

@@ -7,6 +7,8 @@ import type {
   AudioParams,
   ProviderCapabilities,
   ProviderInfo,
+  TranscribeParams,
+  TranscribedText,
 } from "../../src/providers/types.js";
 
 describe("Provider types", () => {
@@ -96,8 +98,10 @@ describe("Provider types", () => {
   it("ProviderCapabilities has all required fields", () => {
     const capabilities: ProviderCapabilities = {
       supportsImageGeneration: true,
+      supportsImageEditing: true,
       supportsVideoGeneration: false,
       supportsAudioGeneration: true,
+      supportsTranscription: false,
       supportedImageAspectRatios: ["1:1", "16:9"],
       supportedVideoAspectRatios: [],
       supportedVideoResolutions: [],
@@ -105,13 +109,46 @@ describe("Provider types", () => {
       maxVideoDurationSeconds: 0,
     };
     expect(capabilities.supportsImageGeneration).toBe(true);
+    expect(capabilities.supportsImageEditing).toBe(true);
     expect(capabilities.supportsVideoGeneration).toBe(false);
     expect(capabilities.supportsAudioGeneration).toBe(true);
+    expect(capabilities.supportsTranscription).toBe(false);
     expect(capabilities.supportedImageAspectRatios).toEqual(["1:1", "16:9"]);
     expect(capabilities.supportedVideoAspectRatios).toEqual([]);
     expect(capabilities.supportedVideoResolutions).toEqual([]);
     expect(capabilities.supportedAudioFormats).toEqual(["mp3", "wav"]);
     expect(capabilities.maxVideoDurationSeconds).toBe(0);
+  });
+
+  it("TranscribeParams has required and optional fields", () => {
+    const params: TranscribeParams = {
+      audioData: Buffer.from("audio"),
+      audioMimeType: "audio/mpeg",
+    };
+    expect(params.audioData).toBeInstanceOf(Buffer);
+    expect(params.audioMimeType).toBe("audio/mpeg");
+    expect(params.language).toBeUndefined();
+    expect(params.providerOptions).toBeUndefined();
+  });
+
+  it("TranscribeParams accepts optional fields", () => {
+    const params: TranscribeParams = {
+      audioData: Buffer.from("audio"),
+      audioMimeType: "audio/wav",
+      language: "en",
+      providerOptions: { model: "whisper-1" },
+    };
+    expect(params.language).toBe("en");
+    expect(params.providerOptions).toEqual({ model: "whisper-1" });
+  });
+
+  it("TranscribedText has required fields", () => {
+    const result: TranscribedText = {
+      text: "Hello world",
+      metadata: { provider: "openai", model: "whisper-1" },
+    };
+    expect(result.text).toBe("Hello world");
+    expect(result.metadata).toEqual({ provider: "openai", model: "whisper-1" });
   });
 
   it("ProviderInfo has name and capabilities fields", () => {

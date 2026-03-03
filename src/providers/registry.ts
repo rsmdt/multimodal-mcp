@@ -39,6 +39,12 @@ export class ProviderRegistry {
     );
   }
 
+  getTranscriptionProviders(): MediaProvider[] {
+    return [...this.providers.values()].filter(
+      (p) => p.capabilities.supportsTranscription,
+    );
+  }
+
   listCapabilities(): ProviderInfo[] {
     return [...this.providers.values()].map((p) => ({
       name: p.name,

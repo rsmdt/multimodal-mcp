@@ -3,6 +3,7 @@ const API_KEY_PATTERNS: RegExp[] = [
   /xai-[a-zA-Z0-9_-]{10,}/g,
   /AIzaSy[a-zA-Z0-9_-]{10,}/g,
   /key=[a-zA-Z0-9_-]{20,}/g,
+  /xi-[a-zA-Z0-9_-]{10,}/g,
 ];
 
 export function sanitizeError(error: unknown): string {

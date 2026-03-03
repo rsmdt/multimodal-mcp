@@ -5,24 +5,35 @@ import type {
   MediaProvider,
   GeneratedMedia,
   ImageParams,
+  EditImageParams,
   VideoParams,
+  AudioParams,
 } from "../../src/providers/types.js";
 
 const makeProvider = (
   name: string,
-  supportsImage: boolean,
-  supportsVideo: boolean,
+  overrides: Partial<MediaProvider["capabilities"]> = {},
 ): MediaProvider => ({
   name,
   capabilities: {
-    supportsImageGeneration: supportsImage,
-    supportsVideoGeneration: supportsVideo,
-    supportedImageAspectRatios: supportsImage ? ["1:1", "16:9"] : [],
-    supportedVideoAspectRatios: supportsVideo ? ["16:9"] : [],
-    supportedVideoResolutions: supportsVideo ? ["1080p"] : [],
-    maxVideoDurationSeconds: supportsVideo ? 60 : 0,
+    supportsImageGeneration: false,
+    supportsImageEditing: false,
+    supportsVideoGeneration: false,
+    supportsAudioGeneration: false,
+    supportsTranscription: false,
+    supportedImageAspectRatios: [],
+    supportedVideoAspectRatios: [],
+    supportedVideoResolutions: [],
+    supportedAudioFormats: [],
+    maxVideoDurationSeconds: 0,
+    ...overrides,
   },
   generateImage: async (_params: ImageParams): Promise<GeneratedMedia> => ({
+    data: Buffer.from("image"),
+    mimeType: "image/png",
+    metadata: {},
+  }),
+  editImage: async (_params: EditImageParams): Promise<GeneratedMedia> => ({
     data: Buffer.from("image"),
     mimeType: "image/png",
     metadata: {},
@@ -30,6 +41,11 @@ const makeProvider = (
   generateVideo: async (_params: VideoParams): Promise<GeneratedMedia> => ({
     data: Buffer.from("video"),
     mimeType: "video/mp4",
+    metadata: {},
+  }),
+  generateAudio: async (_params: AudioParams): Promise<GeneratedMedia> => ({
+    data: Buffer.from("audio"),
+    mimeType: "audio/mpeg",
     metadata: {},
   }),
 });
@@ -51,7 +67,7 @@ describe("buildListProvidersHandler", () => {
   });
 
   it("returns formatted list of configured providers", async () => {
-    registry.register(makeProvider("openai", true, false));
+    registry.register(makeProvider("openai", { supportsImageGeneration: true }));
     const handler = buildListProvidersHandler(registry);
     const result = await handler();
 
@@ -61,7 +77,7 @@ describe("buildListProvidersHandler", () => {
   });
 
   it("indicates image support per provider", async () => {
-    registry.register(makeProvider("openai", true, false));
+    registry.register(makeProvider("openai", { supportsImageGeneration: true }));
     const handler = buildListProvidersHandler(registry);
     const result = await handler();
 
@@ -69,17 +85,25 @@ describe("buildListProvidersHandler", () => {
   });
 
   it("indicates video support per provider", async () => {
-    registry.register(makeProvider("google", false, true));
+    registry.register(makeProvider("google", { supportsVideoGeneration: true }));
     const handler = buildListProvidersHandler(registry);
     const result = await handler();
 
     expect(result.content[0].text).toContain("video");
   });
 
+  it("indicates transcription support per provider", async () => {
+    registry.register(makeProvider("elevenlabs", { supportsTranscription: true }));
+    const handler = buildListProvidersHandler(registry);
+    const result = await handler();
+
+    expect(result.content[0].text).toContain("transcription");
+  });
+
   it("lists multiple providers when several are configured", async () => {
-    registry.register(makeProvider("openai", true, false));
-    registry.register(makeProvider("xai", true, false));
-    registry.register(makeProvider("google", false, true));
+    registry.register(makeProvider("openai", { supportsImageGeneration: true }));
+    registry.register(makeProvider("xai", { supportsImageGeneration: true }));
+    registry.register(makeProvider("google", { supportsVideoGeneration: true }));
     const handler = buildListProvidersHandler(registry);
     const result = await handler();
 
@@ -90,12 +114,20 @@ describe("buildListProvidersHandler", () => {
   });
 
   it("shows both image and video capabilities for a provider that supports both", async () => {
-    registry.register(makeProvider("full-provider", true, true));
+    registry.register(makeProvider("full-provider", { supportsImageGeneration: true, supportsVideoGeneration: true }));
     const handler = buildListProvidersHandler(registry);
     const result = await handler();
 
     const text = result.content[0].text;
     expect(text).toContain("image");
     expect(text).toContain("video");
+  });
+
+  it("includes ELEVENLABS_API_KEY and BFL_API_KEY in no-providers message", async () => {
+    const handler = buildListProvidersHandler(registry);
+    const result = await handler();
+
+    expect(result.content[0].text).toContain("ELEVENLABS_API_KEY");
+    expect(result.content[0].text).toContain("BFL_API_KEY");
   });
 });

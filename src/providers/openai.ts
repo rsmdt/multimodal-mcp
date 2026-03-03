@@ -7,6 +7,8 @@ import type {
   VideoParams,
   AudioParams,
   GeneratedMedia,
+  TranscribeParams,
+  TranscribedText,
 } from "./types.js";
 import { pollForCompletion } from "./polling.js";
 
@@ -25,6 +27,7 @@ export class OpenAIProvider implements MediaProvider {
     supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: true,
+    supportsTranscription: true,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
     supportedVideoAspectRatios: ["16:9", "9:16", "1:1"],
     supportedVideoResolutions: ["480p", "720p", "1080p"],
@@ -140,6 +143,26 @@ export class OpenAIProvider implements MediaProvider {
       data,
       mimeType: this.audioFormatToMimeType(format),
       metadata: { model: "tts-1", provider: "openai", voice, format },
+    };
+  }
+
+  async transcribeAudio(params: TranscribeParams): Promise<TranscribedText> {
+    const audioFile = new File(
+      [new Uint8Array(params.audioData)],
+      "audio.wav",
+      { type: params.audioMimeType },
+    );
+
+    const response = await this.client.audio.transcriptions.create({
+      model: "whisper-1",
+      file: audioFile,
+      language: params.language,
+      ...params.providerOptions,
+    });
+
+    return {
+      text: response.text,
+      metadata: { model: "whisper-1", provider: "openai" },
     };
   }
 

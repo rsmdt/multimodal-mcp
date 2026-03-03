@@ -6,13 +6,17 @@ const mockImagesGenerate = vi.fn();
 const mockVideosCreate = vi.fn();
 const mockVideosRetrieve = vi.fn();
 const mockAudioSpeechCreate = vi.fn();
+const mockAudioTranscriptionsCreate = vi.fn();
 
 vi.mock("openai", () => ({
   default: vi.fn().mockImplementation(function () {
     return {
       images: { generate: mockImagesGenerate },
       videos: { create: mockVideosCreate, retrieve: mockVideosRetrieve },
-      audio: { speech: { create: mockAudioSpeechCreate } },
+      audio: {
+        speech: { create: mockAudioSpeechCreate },
+        transcriptions: { create: mockAudioTranscriptionsCreate },
+      },
     };
   }),
 }));
@@ -366,6 +370,68 @@ describe("OpenAIProvider", () => {
       await expect(provider.generateAudio({ text: "Hello world" })).rejects.toThrow(
         "500 Internal Server Error",
       );
+    });
+  });
+
+  describe("transcribeAudio()", () => {
+    const fakeAudioData = Buffer.from("fake-audio-bytes");
+
+    beforeEach(() => {
+      mockAudioTranscriptionsCreate.mockResolvedValue({ text: "Hello world" });
+    });
+
+    it("calls client.audio.transcriptions.create with model 'whisper-1' and audio file", async () => {
+      await provider.transcribeAudio!({
+        audioData: fakeAudioData,
+        audioMimeType: "audio/wav",
+      });
+
+      expect(mockAudioTranscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ model: "whisper-1", file: expect.any(File) }),
+      );
+    });
+
+    it("returns TranscribedText with text and correct metadata", async () => {
+      const result = await provider.transcribeAudio!({
+        audioData: fakeAudioData,
+        audioMimeType: "audio/wav",
+      });
+
+      expect(result.text).toBe("Hello world");
+      expect(result.metadata).toMatchObject({ model: "whisper-1", provider: "openai" });
+    });
+
+    it("passes language parameter when provided", async () => {
+      await provider.transcribeAudio!({
+        audioData: fakeAudioData,
+        audioMimeType: "audio/wav",
+        language: "en",
+      });
+
+      expect(mockAudioTranscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ language: "en" }),
+      );
+    });
+
+    it("spreads providerOptions into the API call", async () => {
+      await provider.transcribeAudio!({
+        audioData: fakeAudioData,
+        audioMimeType: "audio/wav",
+        providerOptions: { temperature: 0.2, prompt: "technical" },
+      });
+
+      expect(mockAudioTranscriptionsCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ temperature: 0.2, prompt: "technical" }),
+      );
+    });
+
+    it("throws on API failure", async () => {
+      const error = new Error("429 Too Many Requests");
+      mockAudioTranscriptionsCreate.mockRejectedValue(error);
+
+      await expect(
+        provider.transcribeAudio!({ audioData: fakeAudioData, audioMimeType: "audio/wav" }),
+      ).rejects.toThrow("429 Too Many Requests");
     });
   });
 });

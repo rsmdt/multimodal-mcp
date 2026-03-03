@@ -12,6 +12,7 @@ const makeAudioProvider = (name: string, supportsAudio: boolean): MediaProvider 
     supportsImageGeneration: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: supportsAudio,
+    supportsTranscription: false,
     supportedImageAspectRatios: ["1:1"],
     supportedVideoAspectRatios: ["16:9"],
     supportedVideoResolutions: ["1080p"],
@@ -30,6 +31,7 @@ const makeRegistry = (provider?: MediaProvider): ProviderRegistry => ({
   getImageProviders: vi.fn().mockReturnValue([]),
   getVideoProviders: vi.fn().mockReturnValue([]),
   getAudioProviders: vi.fn().mockReturnValue(provider?.capabilities.supportsAudioGeneration ? [provider] : []),
+  getTranscriptionProviders: vi.fn().mockReturnValue([]),
   listCapabilities: vi.fn().mockReturnValue([]),
   register: vi.fn(),
 }) as unknown as ProviderRegistry;

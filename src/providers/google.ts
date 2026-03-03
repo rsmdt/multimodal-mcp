@@ -41,6 +41,7 @@ export class GoogleProvider implements MediaProvider {
     supportsImageEditing: true,
     supportsVideoGeneration: true,
     supportsAudioGeneration: true,
+    supportsTranscription: false,
     supportedImageAspectRatios: ["1:1", "16:9", "9:16", "4:3", "3:4"],
     supportedVideoAspectRatios: ["16:9", "9:16"],
     supportedVideoResolutions: ["720p", "1080p"],

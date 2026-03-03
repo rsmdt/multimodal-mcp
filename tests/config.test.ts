@@ -10,6 +10,8 @@ describe("loadConfig", () => {
     delete process.env.XAI_API_KEY;
     delete process.env.GOOGLE_API_KEY;
     delete process.env.GEMINI_API_KEY;
+    delete process.env.ELEVENLABS_API_KEY;
+    delete process.env.BFL_API_KEY;
     delete process.env.MEDIA_OUTPUT_DIR;
   });
 
@@ -55,11 +57,25 @@ describe("loadConfig", () => {
     expect(config.outputDirectory).toBeTruthy();
   });
 
+  it("handles ELEVENLABS_API_KEY", () => {
+    process.env.ELEVENLABS_API_KEY = "xi-test-key";
+    const config = loadConfig();
+    expect(config.elevenlabsApiKey).toBe("xi-test-key");
+  });
+
+  it("handles BFL_API_KEY", () => {
+    process.env.BFL_API_KEY = "bfl-test-key";
+    const config = loadConfig();
+    expect(config.bflApiKey).toBe("bfl-test-key");
+  });
+
   it("works when no keys are set", () => {
     const config = loadConfig();
     expect(config.openaiApiKey).toBeUndefined();
     expect(config.xaiApiKey).toBeUndefined();
     expect(config.googleApiKey).toBeUndefined();
+    expect(config.elevenlabsApiKey).toBeUndefined();
+    expect(config.bflApiKey).toBeUndefined();
     expect(config.outputDirectory).toBeTruthy();
   });
 });

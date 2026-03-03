@@ -5,6 +5,7 @@ export interface MediaProvider {
   editImage(params: EditImageParams): Promise<GeneratedMedia>;
   generateVideo(params: VideoParams): Promise<GeneratedMedia>;
   generateAudio(params: AudioParams): Promise<GeneratedMedia>;
+  transcribeAudio?(params: TranscribeParams): Promise<TranscribedText>;
 }
 
 export interface ProviderCapabilities {
@@ -12,6 +13,7 @@ export interface ProviderCapabilities {
   supportsImageEditing: boolean;
   supportsVideoGeneration: boolean;
   supportsAudioGeneration: boolean;
+  supportsTranscription: boolean;
   supportedImageAspectRatios: string[];
   supportedVideoAspectRatios: string[];
   supportedVideoResolutions: string[];
@@ -54,6 +56,18 @@ export interface AudioParams {
 export interface GeneratedMedia {
   data: Buffer;
   mimeType: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface TranscribeParams {
+  audioData: Buffer;
+  audioMimeType: string;
+  language?: string;
+  providerOptions?: Record<string, unknown>;
+}
+
+export interface TranscribedText {
+  text: string;
   metadata: Record<string, unknown>;
 }
 
