@@ -21,6 +21,9 @@ Thumbs.db
 .env
 .env.*
 
+# MCP Registry auth tokens
+.mcpregistry_*
+
 # npm
 *.tgz
 npm-debug.log*

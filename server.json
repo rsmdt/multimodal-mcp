@@ -1,0 +1,64 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.rsmdt/multimodal",
+  "description": "Multi-provider media generation MCP server. Generate images, videos, audio, and transcriptions using OpenAI, xAI, Gemini, ElevenLabs, and BFL through a unified interface.",
+  "repository": {
+    "url": "https://github.com/rsmdt/multimodal-mcp",
+    "source": "github"
+  },
+  "version": "1.2.3",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@r16t/multimodal-mcp",
+      "version": "1.2.3",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "OpenAI API key for image, video, audio generation and transcription",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "XAI_API_KEY",
+          "description": "xAI API key for image and video generation",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Google Gemini API key for image, video, and audio generation",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "ELEVENLABS_API_KEY",
+          "description": "ElevenLabs API key for audio generation and transcription",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "BFL_API_KEY",
+          "description": "BFL API key for FLUX image generation and editing",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "MEDIA_OUTPUT_DIR",
+          "description": "Directory for saved media files (defaults to cwd)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
