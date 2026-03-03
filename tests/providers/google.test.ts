@@ -78,7 +78,7 @@ describe("GoogleProvider", () => {
       await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "standard" });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("imagen-4"),
+        expect.stringContaining("imagen-4.0-generate-001:predict"),
         expect.any(Object),
       );
     });
@@ -92,20 +92,21 @@ describe("GoogleProvider", () => {
       );
     });
 
-    it("sends the prompt in the request body", async () => {
+    it("sends the prompt in instances array", async () => {
       await provider.generateImage({ prompt: "a cat", aspectRatio: "1:1", quality: "standard" });
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
-      expect(body.prompt).toBe("a cat");
+      expect(body.instances).toEqual([{ prompt: "a cat" }]);
     });
 
-    it("sends the aspectRatio in the request config", async () => {
+    it("sends aspectRatio and sampleCount in parameters", async () => {
       await provider.generateImage({ prompt: "a cat", aspectRatio: "16:9", quality: "standard" });
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
-      expect(body.config.aspectRatio).toBe("16:9");
+      expect(body.parameters.aspectRatio).toBe("16:9");
+      expect(body.parameters.sampleCount).toBe(1);
     });
 
     it("returns GeneratedMedia with buffer decoded from base64", async () => {
@@ -136,7 +137,7 @@ describe("GoogleProvider", () => {
         quality: "standard",
       });
 
-      expect(result.metadata).toMatchObject({ model: "imagen-4", provider: "google" });
+      expect(result.metadata).toMatchObject({ model: "imagen-4.0-generate-001", provider: "google" });
     });
 
     it("throws on HTTP error response", async () => {
@@ -185,7 +186,7 @@ describe("GoogleProvider", () => {
       });
 
       expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining("veo-3.1"),
+        expect.stringContaining("veo-3.1-generate-preview:predictLongRunning"),
         expect.any(Object),
       );
     });
@@ -204,7 +205,7 @@ describe("GoogleProvider", () => {
       );
     });
 
-    it("sends prompt and duration in the request body", async () => {
+    it("sends prompt in instances and duration in parameters", async () => {
       await provider.generateVideo({
         prompt: "a flying bird",
         duration: 5,
@@ -214,8 +215,9 @@ describe("GoogleProvider", () => {
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
-      expect(body.prompt).toBe("a flying bird");
-      expect(body.config.durationSeconds).toBe(5);
+      expect(body.instances[0].prompt).toBe("a flying bird");
+      expect(body.parameters.durationSeconds).toBe(5);
+      expect(body.parameters.aspectRatio).toBe("16:9");
     });
 
     it("polls for operation completion using pollForCompletion", async () => {
@@ -291,7 +293,7 @@ describe("GoogleProvider", () => {
       });
 
       expect(result.metadata).toMatchObject({
-        model: "veo-3.1",
+        model: "veo-3.1-generate-preview",
         provider: "google",
         operationName: fakeOperationName,
       });
@@ -381,7 +383,7 @@ describe("GoogleProvider", () => {
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
       expect(
-        body.generationConfig.speech_config.voiceConfig.prebuiltVoiceConfig.voiceName,
+        body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,
       ).toBe("Kore");
     });
 
@@ -391,16 +393,16 @@ describe("GoogleProvider", () => {
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
       expect(
-        body.generationConfig.speech_config.voiceConfig.prebuiltVoiceConfig.voiceName,
+        body.generationConfig.speechConfig.voiceConfig.prebuiltVoiceConfig.voiceName,
       ).toBe("Puck");
     });
 
-    it("sends response_modalities: ['AUDIO'] in generationConfig", async () => {
+    it("sends responseModalities: ['AUDIO'] in generationConfig", async () => {
       await provider.generateAudio({ text: "Hello world" });
 
       const callArgs = mockFetch.mock.calls[0];
       const body = JSON.parse(callArgs[1].body as string);
-      expect(body.generationConfig.response_modalities).toEqual(["AUDIO"]);
+      expect(body.generationConfig.responseModalities).toEqual(["AUDIO"]);
     });
 
     it("returns GeneratedMedia with decoded base64 audio data", async () => {

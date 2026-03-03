@@ -89,7 +89,7 @@ export class OpenAIProvider implements MediaProvider {
     const createParams: Record<string, unknown> = {
       model: "sora-2",
       prompt: params.prompt,
-      duration: params.duration,
+      seconds: String(params.duration),
       ...params.providerOptions,
     };
 

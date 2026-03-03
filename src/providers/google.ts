@@ -56,13 +56,14 @@ export class GoogleProvider implements MediaProvider {
 
   async generateImage(params: ImageParams): Promise<GeneratedMedia> {
     const response = await fetch(
-      `${GEMINI_BASE_URL}/models/imagen-4:generateImages?key=${this.apiKey}`,
+      `${GEMINI_BASE_URL}/models/imagen-4.0-generate-001:predict?key=${this.apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: params.prompt,
-          config: {
+          instances: [{ prompt: params.prompt }],
+          parameters: {
+            sampleCount: 1,
             aspectRatio: params.aspectRatio,
             ...params.providerOptions,
           },
@@ -80,7 +81,7 @@ export class GoogleProvider implements MediaProvider {
     return {
       data: Buffer.from(base64, "base64"),
       mimeType: "image/png",
-      metadata: { model: "imagen-4", provider: "google" },
+      metadata: { model: "imagen-4.0-generate-001", provider: "google" },
     };
   }
 
@@ -97,8 +98,8 @@ export class GoogleProvider implements MediaProvider {
             parts: [
               { text: params.prompt },
               {
-                inline_data: {
-                  mime_type: params.imageMimeType,
+                inlineData: {
+                  mimeType: params.imageMimeType,
                   data: base64Image,
                 },
               },
@@ -137,25 +138,31 @@ export class GoogleProvider implements MediaProvider {
   }
 
   async generateVideo(params: VideoParams): Promise<GeneratedMedia> {
-    const requestBody: Record<string, unknown> = {
+    const instance: Record<string, unknown> = {
       prompt: params.prompt,
-      config: {
+    };
+
+    if (params.imageData) {
+      const base64Image = params.imageData.toString("base64");
+      instance.image = {
+        inlineData: {
+          mimeType: params.imageMimeType ?? "image/png",
+          data: base64Image,
+        },
+      };
+    }
+
+    const requestBody: Record<string, unknown> = {
+      instances: [instance],
+      parameters: {
         aspectRatio: params.aspectRatio,
         durationSeconds: params.duration,
         ...params.providerOptions,
       },
     };
 
-    if (params.imageData) {
-      const base64Image = params.imageData.toString("base64");
-      (requestBody as Record<string, unknown>).image = {
-        bytesBase64Encoded: base64Image,
-        mimeType: params.imageMimeType ?? "image/png",
-      };
-    }
-
     const submitResponse = await fetch(
-      `${GEMINI_BASE_URL}/models/veo-3.1:predictLongRunning?key=${this.apiKey}`,
+      `${GEMINI_BASE_URL}/models/veo-3.1-generate-preview:predictLongRunning?key=${this.apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,7 +194,7 @@ export class GoogleProvider implements MediaProvider {
     return {
       data,
       mimeType: "video/mp4",
-      metadata: { model: "veo-3.1", provider: "google", operationName: operation.name },
+      metadata: { model: "veo-3.1-generate-preview", provider: "google", operationName: operation.name },
     };
   }
 
@@ -203,8 +210,8 @@ export class GoogleProvider implements MediaProvider {
         body: JSON.stringify({
           contents: [{ parts: [{ text: params.text }] }],
           generationConfig: {
-            response_modalities: ["AUDIO"],
-            speech_config: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
               voiceConfig: {
                 prebuiltVoiceConfig: { voiceName: voice },
               },

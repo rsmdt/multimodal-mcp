@@ -209,7 +209,7 @@ describe("OpenAIProvider", () => {
       );
     });
 
-    it("calls client.videos.create with prompt and duration", async () => {
+    it("calls client.videos.create with prompt and seconds as string", async () => {
       await provider.generateVideo({
         prompt: "a flying bird",
         duration: 5,
@@ -218,7 +218,7 @@ describe("OpenAIProvider", () => {
       });
 
       expect(mockVideosCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ prompt: "a flying bird", duration: 5 }),
+        expect.objectContaining({ prompt: "a flying bird", seconds: "5" }),
       );
     });
 
