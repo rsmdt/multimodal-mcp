@@ -41,7 +41,7 @@ export class ProviderRegistry {
 
   getTranscriptionProviders(): MediaProvider[] {
     return [...this.providers.values()].filter(
-      (p) => p.capabilities.supportsTranscription,
+      (p) => typeof p.transcribeAudio === "function",
     );
   }
 

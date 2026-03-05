@@ -13,7 +13,7 @@ export interface ProviderCapabilities {
   supportsImageEditing: boolean;
   supportsVideoGeneration: boolean;
   supportsAudioGeneration: boolean;
-  supportsTranscription: boolean;
+  supportsTranscription?: boolean;
   supportedImageAspectRatios: string[];
   supportedVideoAspectRatios: string[];
   supportedVideoResolutions: string[];

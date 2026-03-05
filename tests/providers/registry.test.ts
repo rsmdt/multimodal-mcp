@@ -6,6 +6,8 @@ import type {
   ImageParams,
   VideoParams,
   AudioParams,
+  TranscribedText,
+  TranscribeParams,
 } from "../../src/providers/types.js";
 
 const makeProvider = (
@@ -42,6 +44,12 @@ const makeProvider = (
     mimeType: "audio/mpeg",
     metadata: {},
   }),
+  ...(supportsTranscription ? {
+    transcribeAudio: async (_params: TranscribeParams): Promise<TranscribedText> => ({
+      text: "transcribed text",
+      metadata: { provider: name, model: "test-model" },
+    }),
+  } : {}),
 });
 
 describe("ProviderRegistry", () => {

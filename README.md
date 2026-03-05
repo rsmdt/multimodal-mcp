@@ -19,19 +19,19 @@ Set the API key for at least one provider. Most users only need one — add more
 
 ```bash
 # Using OpenAI
-claude mcp add multimodal-mcp -e OPENAI_API_KEY=sk-... -- npx @r16t/multimodal-mcp@latest
+claude mcp add multimodal-mcp -e OPENAI_API_KEY=sk-... -- npx -y @r16t/multimodal-mcp@latest
 
 # Or using xAI
-# claude mcp add multimodal-mcp -e XAI_API_KEY=xai-... -- npx @r16t/multimodal-mcp@latest
+# claude mcp add multimodal-mcp -e XAI_API_KEY=xai-... -- npx -y @r16t/multimodal-mcp@latest
 
 # Or using Gemini
-# claude mcp add multimodal-mcp -e GEMINI_API_KEY=AIza... -- npx @r16t/multimodal-mcp@latest
+# claude mcp add multimodal-mcp -e GEMINI_API_KEY=AIza... -- npx -y @r16t/multimodal-mcp@latest
 
 # Or using ElevenLabs (audio + transcription)
-# claude mcp add multimodal-mcp -e ELEVENLABS_API_KEY=xi-... -- npx @r16t/multimodal-mcp@latest
+# claude mcp add multimodal-mcp -e ELEVENLABS_API_KEY=xi-... -- npx -y @r16t/multimodal-mcp@latest
 
 # Or using BFL/FLUX (images)
-# claude mcp add multimodal-mcp -e BFL_API_KEY=... -- npx @r16t/multimodal-mcp@latest
+# claude mcp add multimodal-mcp -e BFL_API_KEY=... -- npx -y @r16t/multimodal-mcp@latest
 ```
 
 Using a different editor? See [setup instructions](#editor-setup) for Claude Desktop, Cursor, VS Code, Windsurf, and Cline.

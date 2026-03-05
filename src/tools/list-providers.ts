@@ -14,13 +14,13 @@ export function buildListProvidersHandler(registry: ProviderRegistry) {
     }
 
     const lines = providers.map((p) => {
-      const caps: string[] = [];
-      if (p.capabilities.supportsImageGeneration) caps.push("image");
-      if (p.capabilities.supportsImageEditing) caps.push("image editing");
-      if (p.capabilities.supportsVideoGeneration) caps.push("video");
-      if (p.capabilities.supportsAudioGeneration) caps.push("audio");
-      if (p.capabilities.supportsTranscription) caps.push("transcription");
-      return `- ${p.name}: ${caps.join(", ")}`;
+      const capabilityLabels: string[] = [];
+      if (p.capabilities.supportsImageGeneration) capabilityLabels.push("image");
+      if (p.capabilities.supportsImageEditing) capabilityLabels.push("image editing");
+      if (p.capabilities.supportsVideoGeneration) capabilityLabels.push("video");
+      if (p.capabilities.supportsAudioGeneration) capabilityLabels.push("audio");
+      if (p.capabilities.supportsTranscription) capabilityLabels.push("transcription");
+      return `- ${p.name}: ${capabilityLabels.join(", ")}`;
     });
 
     return {

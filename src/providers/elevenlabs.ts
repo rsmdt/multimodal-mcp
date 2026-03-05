@@ -13,7 +13,7 @@ import type {
 const BASE_URL = "https://api.elevenlabs.io/v1";
 const DEFAULT_VOICE_ID = "JBFqnCBsd6RMkjVDRZzb";
 const DEFAULT_TTS_MODEL = "eleven_flash_v2_5";
-const TRANSCRIPTION_MODEL = "scribe_v1";
+const TRANSCRIPTION_MODEL = "scribe_v2";
 
 export class ElevenLabsProvider implements MediaProvider {
   readonly name = "elevenlabs";
@@ -113,7 +113,7 @@ export class ElevenLabsProvider implements MediaProvider {
       Object.entries(params.providerOptions ?? {}).filter(([k]) => k !== "mode"),
     );
 
-    const response = await fetch(`${BASE_URL}/text-to-sound-effects`, {
+    const response = await fetch(`${BASE_URL}/sound-generation`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "xi-api-key": this.apiKey },
       body: JSON.stringify({ text: params.text, ...filtered }),

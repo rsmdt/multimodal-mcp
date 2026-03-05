@@ -149,7 +149,7 @@ describe("ElevenLabsProvider", () => {
     it("POSTs to text-to-sound-effects endpoint", async () => {
       await provider.generateAudio(audioParams);
       expect(mockFetch).toHaveBeenCalledWith(
-        "https://api.elevenlabs.io/v1/text-to-sound-effects",
+        "https://api.elevenlabs.io/v1/sound-generation",
         expect.objectContaining({ method: "POST" }),
       );
     });
@@ -235,7 +235,7 @@ describe("ElevenLabsProvider", () => {
 
     it("includes provider metadata", async () => {
       const result = await provider.transcribeAudio!(transcribeParams);
-      expect(result.metadata).toMatchObject({ provider: "elevenlabs", model: "scribe_v1" });
+      expect(result.metadata).toMatchObject({ provider: "elevenlabs", model: "scribe_v2" });
     });
 
     it("appends language_code when language is provided", async () => {

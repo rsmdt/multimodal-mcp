@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { BFLProvider } from "../../src/providers/bfl.js";
 
 const API_KEY = "test-bfl-key";
-const BASE_URL = "https://api.bfl.ml/v1";
+const BASE_URL = "https://api.bfl.ai/v1";
+const POLLING_URL = "https://api.bfl.ai/v1/get_result?id=task-123";
 
 function makeJsonResponse(body: unknown, ok = true, status = 200): Response {
   return {
@@ -91,9 +92,9 @@ describe("BFLProvider", () => {
 
     const imageBuffer = new Uint8Array([10, 20, 30]).buffer;
 
-    function setupSuccessfulFlow(taskId = "task-img-123"): void {
+    function setupSuccessfulFlow(pollingUrl = POLLING_URL): void {
       mockFetch
-        .mockResolvedValueOnce(makeJsonResponse({ id: taskId }))
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-123", polling_url: pollingUrl }))
         .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/img.jpg" } }))
         .mockResolvedValueOnce(makeImageDownloadResponse(imageBuffer));
     }
@@ -107,11 +108,11 @@ describe("BFLProvider", () => {
       );
     });
 
-    it("includes X-Key auth header in submit request", async () => {
+    it("includes x-key auth header in submit request", async () => {
       setupSuccessfulFlow();
       await provider.generateImage(imageParams);
       const [, submitOptions] = mockFetch.mock.calls[0];
-      expect(submitOptions.headers).toMatchObject({ "X-Key": API_KEY });
+      expect(submitOptions.headers).toMatchObject({ "x-key": API_KEY });
     });
 
     it("sends prompt in request body", async () => {
@@ -131,11 +132,12 @@ describe("BFLProvider", () => {
       expect(body.height).toBe(1024);
     });
 
-    it("polls get_result endpoint with task id", async () => {
-      setupSuccessfulFlow("task-poll-check");
+    it("polls using polling_url from submit response", async () => {
+      const pollingUrl = "https://api.bfl.ai/v1/get_result?id=custom-poll";
+      setupSuccessfulFlow(pollingUrl);
       await provider.generateImage(imageParams);
       expect(mockFetch).toHaveBeenCalledWith(
-        `${BASE_URL}/get_result?id=task-poll-check`,
+        pollingUrl,
         expect.anything(),
       );
     });
@@ -160,7 +162,7 @@ describe("BFLProvider", () => {
 
     it("falls back to image/png when Content-Type is missing", async () => {
       mockFetch
-        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1" }))
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1", polling_url: POLLING_URL }))
         .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/img.jpg" } }))
         .mockResolvedValueOnce(makeJsonResponse({}, true, 200));
       const result = await provider.generateImage(imageParams);
@@ -189,6 +191,12 @@ describe("BFLProvider", () => {
       expect(body.seed).toBe(42);
     });
 
+    it("throws for unknown model", async () => {
+      await expect(
+        provider.generateImage({ ...imageParams, providerOptions: { model: "unknown-model" } }),
+      ).rejects.toThrow("Unknown BFL model");
+    });
+
     it("throws when submit response is not OK", async () => {
       mockFetch.mockResolvedValueOnce(makeJsonResponse({ error: "unauthorized" }, false, 401));
       await expect(provider.generateImage(imageParams)).rejects.toThrow("401");
@@ -196,19 +204,40 @@ describe("BFLProvider", () => {
 
     it("throws when download response is not OK", async () => {
       mockFetch
-        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1" }))
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1", polling_url: POLLING_URL }))
         .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/img.jpg" } }))
         .mockResolvedValueOnce({ ok: false, status: 403, headers: { get: () => null } } as unknown as Response);
       await expect(provider.generateImage(imageParams)).rejects.toThrow("403");
+    });
+
+    it("rejects download from unexpected host", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://evil.com/img.jpg" } }));
+      await expect(provider.generateImage(imageParams)).rejects.toThrow("Unexpected BFL download host");
+    });
+
+    it("rejects polling_url from unexpected host", async () => {
+      mockFetch.mockResolvedValueOnce(
+        makeJsonResponse({ id: "task-1", polling_url: "https://evil.com/poll" }),
+      );
+      await expect(provider.generateImage(imageParams)).rejects.toThrow("Unexpected BFL polling host");
+    });
+
+    it("throws when Ready status has no result sample", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Ready" }));
+      await expect(provider.generateImage(imageParams)).rejects.toThrow("BFL returned Ready status with no result sample");
     });
   });
 
   describe("generateImage() aspect ratio mapping", () => {
     const imageBuffer = new Uint8Array([1]).buffer;
 
-    function setupFlow(taskId = "task-1"): void {
+    function setupFlow(): void {
       mockFetch
-        .mockResolvedValueOnce(makeJsonResponse({ id: taskId }))
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-1", polling_url: POLLING_URL }))
         .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/img.jpg" } }))
         .mockResolvedValueOnce(makeImageDownloadResponse(imageBuffer));
     }
@@ -244,6 +273,12 @@ describe("BFLProvider", () => {
       expect(body.width).toBe(896);
       expect(body.height).toBe(1152);
     });
+
+    it("throws for unsupported aspect ratio", async () => {
+      await expect(
+        provider.generateImage({ prompt: "test", aspectRatio: "2:1", quality: "standard" }),
+      ).rejects.toThrow("does not support aspect ratio");
+    });
   });
 
   describe("generateImage() polling", () => {
@@ -252,9 +287,8 @@ describe("BFLProvider", () => {
     it("polls multiple times until status is Ready", async () => {
       vi.useFakeTimers();
       try {
-        const taskId = "task-multi-poll";
         mockFetch
-          .mockResolvedValueOnce(makeJsonResponse({ id: taskId }))
+          .mockResolvedValueOnce(makeJsonResponse({ id: "task-multi-poll", polling_url: POLLING_URL }))
           .mockResolvedValueOnce(makeJsonResponse({ status: "Pending" }))
           .mockResolvedValueOnce(makeJsonResponse({ status: "Processing" }))
           .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/img.jpg" } }))
@@ -271,6 +305,36 @@ describe("BFLProvider", () => {
         vi.useRealTimers();
       }
     });
+
+    it("throws immediately when task status is Error", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-err", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Error" }));
+
+      await expect(
+        provider.generateImage({ prompt: "test", aspectRatio: "1:1", quality: "standard" }),
+      ).rejects.toThrow("BFL task failed with status: Error");
+    });
+
+    it("throws immediately when task status is Failed", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-fail", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Failed" }));
+
+      await expect(
+        provider.generateImage({ prompt: "test", aspectRatio: "1:1", quality: "standard" }),
+      ).rejects.toThrow("BFL task failed with status: Failed");
+    });
+
+    it("throws when poll response is not OK", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-poll-err", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({}, false, 500));
+
+      await expect(
+        provider.generateImage({ prompt: "test", aspectRatio: "1:1", quality: "standard" }),
+      ).rejects.toThrow("BFL poll failed: 500");
+    });
   });
 
   describe("editImage()", () => {
@@ -283,9 +347,9 @@ describe("BFLProvider", () => {
 
     const imageBuffer = new Uint8Array([5, 6, 7]).buffer;
 
-    function setupSuccessfulEditFlow(taskId = "task-edit-123"): void {
+    function setupSuccessfulEditFlow(): void {
       mockFetch
-        .mockResolvedValueOnce(makeJsonResponse({ id: taskId }))
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-edit-123", polling_url: POLLING_URL }))
         .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://cdn.bfl.ai/edited.jpg" } }))
         .mockResolvedValueOnce(makeImageDownloadResponse(imageBuffer));
     }
@@ -299,11 +363,11 @@ describe("BFLProvider", () => {
       );
     });
 
-    it("includes X-Key auth header", async () => {
+    it("includes x-key auth header", async () => {
       setupSuccessfulEditFlow();
       await provider.editImage(editParams);
       const [, submitOptions] = mockFetch.mock.calls[0];
-      expect(submitOptions.headers).toMatchObject({ "X-Key": API_KEY });
+      expect(submitOptions.headers).toMatchObject({ "x-key": API_KEY });
     });
 
     it("includes prompt in request body", async () => {
@@ -349,36 +413,59 @@ describe("BFLProvider", () => {
       expect(result.metadata).toMatchObject({ provider: "bfl" });
     });
 
+    it("throws for unknown model", async () => {
+      await expect(
+        provider.editImage({ ...editParams, providerOptions: { model: "unknown-model" } }),
+      ).rejects.toThrow("Unknown BFL model");
+    });
+
     it("throws when submit response is not OK", async () => {
       mockFetch.mockResolvedValueOnce(makeJsonResponse({ error: "bad request" }, false, 400));
       await expect(provider.editImage(editParams)).rejects.toThrow("400");
     });
+
+    it("rejects download from unexpected host", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-edit-1", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Ready", result: { sample: "https://evil.com/edited.jpg" } }));
+      await expect(provider.editImage(editParams)).rejects.toThrow("Unexpected BFL download host");
+    });
+
+    it("throws when poll returns Error status", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-edit-err", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Error" }));
+      await expect(provider.editImage(editParams)).rejects.toThrow("BFL task failed with status: Error");
+    });
+
+    it("throws when poll returns Failed status", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-edit-fail", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({ status: "Failed" }));
+      await expect(provider.editImage(editParams)).rejects.toThrow("BFL task failed with status: Failed");
+    });
+
+    it("throws when poll response is not OK", async () => {
+      mockFetch
+        .mockResolvedValueOnce(makeJsonResponse({ id: "task-edit-poll", polling_url: POLLING_URL }))
+        .mockResolvedValueOnce(makeJsonResponse({}, false, 500));
+      await expect(provider.editImage(editParams)).rejects.toThrow("BFL poll failed: 500");
+    });
   });
 
   describe("generateVideo()", () => {
-    const videoParams = {
-      prompt: "a flying dragon",
-      duration: 5,
-      aspectRatio: "16:9",
-      resolution: "720p",
-    };
-
     it("throws indicating BFL does not support video generation", async () => {
-      await expect(provider.generateVideo(videoParams)).rejects.toThrow(
-        /BFL does not support video/i,
-      );
+      await expect(
+        provider.generateVideo({ prompt: "a flying dragon", duration: 5, aspectRatio: "16:9", resolution: "720p" }),
+      ).rejects.toThrow(/BFL does not support video/i);
     });
   });
 
   describe("generateAudio()", () => {
-    const audioParams = {
-      text: "hello world",
-    };
-
     it("throws indicating BFL does not support audio generation", async () => {
-      await expect(provider.generateAudio(audioParams)).rejects.toThrow(
-        /BFL does not support audio/i,
-      );
+      await expect(
+        provider.generateAudio({ text: "hello world" }),
+      ).rejects.toThrow(/BFL does not support audio/i);
     });
   });
 });

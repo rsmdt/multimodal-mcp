@@ -25,7 +25,7 @@ export function buildTranscribeAudioHandler(registry: ProviderRegistry) {
       };
     }
 
-    if (!provider.capabilities.supportsTranscription || !provider.transcribeAudio) {
+    if (!provider.transcribeAudio) {
       const available =
         registry.getTranscriptionProviders().map((p) => p.name).join(", ") || "none";
       return {
