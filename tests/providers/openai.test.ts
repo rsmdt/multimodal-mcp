@@ -387,7 +387,7 @@ describe("OpenAIProvider", () => {
       });
 
       expect(mockAudioTranscriptionsCreate).toHaveBeenCalledWith(
-        expect.objectContaining({ model: "whisper-1", file: expect.any(File) }),
+        expect.objectContaining({ model: "whisper-1", file: expect.any(Blob) }),
       );
     });
 

@@ -147,9 +147,8 @@ export class OpenAIProvider implements MediaProvider {
   }
 
   async transcribeAudio(params: TranscribeParams): Promise<TranscribedText> {
-    const audioFile = new File(
+    const audioFile = new Blob(
       [new Uint8Array(params.audioData)],
-      "audio.wav",
       { type: params.audioMimeType },
     );
 
